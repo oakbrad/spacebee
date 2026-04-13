@@ -5,13 +5,18 @@ on:
     branches: [main]
   pull_request:
 
+env:
+  REGISTRY: git.brads.house
+  IMAGE_NAME: brad/waggle
+
 jobs:
   test:
     runs-on: docker-host
     container: ghcr.io/astral-sh/uv:python3.11-bookworm-slim
     steps:
-      # Forgejo runner's slim image has no Node.js, so actions/checkout fails.
-      # Clone manually instead (see global memory: feedback_ci_checkout).
+      # The slim `docker` runner image has no Node, so actions/checkout fails.
+      # Clone manually. (The image job below uses docker-host + node image,
+      # where actions/checkout works fine.)
       - name: Clone repo
         run: |
           apt-get update && apt-get install -y --no-install-recommends git ca-certificates
@@ -30,25 +35,24 @@ jobs:
   image:
     needs: test
     if: github.ref == 'refs/heads/main'
-    runs-on: docker
-    container: docker:27-cli
+    runs-on: docker-host
+    container:
+      image: node:22-bookworm
     steps:
-      - name: Clone repo
-        run: |
-          apk add --no-cache git
-          git clone --depth 1 "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git" .
-          git fetch --depth 1 origin "${GITHUB_SHA}" && git checkout "${GITHUB_SHA}"
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Login to Forgejo registry
+      - name: Install Docker CLI
+        run: apt-get update && apt-get install -y --no-install-recommends docker.io
+
+      - name: Login to Forgejo Registry
         run: |
-          echo "${FORGEJO_TOKEN}" | docker login git.brads.house -u "${FORGEJO_USER}" --password-stdin
-        env:
-          FORGEJO_USER: ${{ secrets.FORGEJO_USER }}
-          FORGEJO_TOKEN: ${{ secrets.FORGEJO_TOKEN }}
+          echo "${{ secrets.REGISTRY_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ secrets.REGISTRY_USER }} --password-stdin
 
       - name: Build and push
         run: |
-          IMAGE=git.brads.house/brad/waggle
-          docker build -t "${IMAGE}:latest" -t "${IMAGE}:${GITHUB_SHA::8}" .
-          docker push "${IMAGE}:latest"
-          docker push "${IMAGE}:${GITHUB_SHA::8}"
+          docker build \
+            -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
+            -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} .
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
