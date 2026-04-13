@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: docker
+    container: ghcr.io/astral-sh/uv:python3.11-bookworm-slim
+    steps:
+      # Forgejo runner's slim image has no Node.js, so actions/checkout fails.
+      # Clone manually instead (see global memory: feedback_ci_checkout).
+      - name: Clone repo
+        run: |
+          apt-get update && apt-get install -y --no-install-recommends git ca-certificates
+          git clone --depth 1 "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git" .
+          git fetch --depth 1 origin "${GITHUB_SHA}" && git checkout "${GITHUB_SHA}"
+
+      - name: Install deps
+        run: uv sync --extra dev
+
+      - name: Lint
+        run: uv run ruff check src tests
+
+      - name: Test
+        run: uv run pytest -q
+
+  image:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: docker
+    container: docker:27-cli
+    steps:
+      - name: Clone repo
+        run: |
+          apk add --no-cache git
+          git clone --depth 1 "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git" .
+          git fetch --depth 1 origin "${GITHUB_SHA}" && git checkout "${GITHUB_SHA}"
+
+      - name: Login to Forgejo registry
+        run: |
+          echo "${FORGEJO_TOKEN}" | docker login git.brads.house -u "${FORGEJO_USER}" --password-stdin
+        env:
+          FORGEJO_USER: ${{ secrets.FORGEJO_USER }}
+          FORGEJO_TOKEN: ${{ secrets.FORGEJO_TOKEN }}
+
+      - name: Build and push
+        run: |
+          IMAGE=git.brads.house/brad/waggle
+          docker build -t "${IMAGE}:latest" -t "${IMAGE}:${GITHUB_SHA::8}" .
+          docker push "${IMAGE}:latest"
+          docker push "${IMAGE}:${GITHUB_SHA::8}"
