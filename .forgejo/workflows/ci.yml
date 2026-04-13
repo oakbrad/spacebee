@@ -7,7 +7,7 @@ on:
 
 jobs:
   test:
-    runs-on: docker
+    runs-on: docker-host
     container: ghcr.io/astral-sh/uv:python3.11-bookworm-slim
     steps:
       # Forgejo runner's slim image has no Node.js, so actions/checkout fails.
