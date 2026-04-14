@@ -347,6 +347,20 @@ def _merge_progress(
     return value, True
 
 
+def _raise_with_body(resp: httpx.Response, value: dict, op: str) -> None:
+    """raise_for_status, but log the PDS error body + payload first.
+
+    Why: the PDS returns 400 with a JSON body that names which lexicon field
+    failed validation; httpx's default exception swallows it.
+    """
+    if resp.status_code >= 400:
+        log.error(
+            "PDS %s rejected (%d): %s\nrecord we sent: %s",
+            op, resp.status_code, resp.text, value,
+        )
+    resp.raise_for_status()
+
+
 async def put_record(client: ATProtoClient, rkey: str, value: dict) -> None:
     did = await client.did()
     resp = await client.request(
@@ -358,7 +372,7 @@ async def put_record(client: ATProtoClient, rkey: str, value: dict) -> None:
             "record": value,
         },
     )
-    resp.raise_for_status()
+    _raise_with_body(resp, value, f"putRecord rkey={rkey}")
     invalidate_cache(did)
 
 
@@ -368,7 +382,7 @@ async def create_record(client: ATProtoClient, value: dict) -> str:
         "POST", "com.atproto.repo.createRecord",
         json={"repo": did, "collection": BOOKHIVE_COLLECTION, "record": value},
     )
-    resp.raise_for_status()
+    _raise_with_body(resp, value, "createRecord")
     invalidate_cache(did)
     uri = resp.json().get("uri", "")
     return uri.rsplit("/", 1)[-1]
