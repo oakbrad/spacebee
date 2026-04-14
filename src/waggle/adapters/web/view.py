@@ -29,6 +29,7 @@ class BookView:
     created_at: str | None
     updated_at: str | None
     stars: int | None       # 1-10 per lexicon; half-star rendering handled at template time
+    review: str | None
     moon_filename: str | None
     bookhive_url: str | None  # https://bookhive.buzz/books/<hiveId> when we have one
 
@@ -82,6 +83,7 @@ def _to_view(record: dict) -> BookView:
     label, slug = STATUS_LABELS.get(status_raw, (status_raw or "Unknown", "unknown"))
     percent = bp.get("percent")
     stars = v.get("stars")
+    review = v.get("review")
     hive_id = _hive_id(v)
     return BookView(
         title=v.get("title", "Untitled"),
@@ -95,6 +97,7 @@ def _to_view(record: dict) -> BookView:
         created_at=v.get("createdAt"),
         updated_at=bp.get("updatedAt"),
         stars=int(stars) if isinstance(stars, (int, float)) else None,
+        review=review.strip() if isinstance(review, str) and review.strip() else None,
         moon_filename=moon.get("file"),
         bookhive_url=f"https://bookhive.buzz/books/{hive_id}" if hive_id else None,
     )

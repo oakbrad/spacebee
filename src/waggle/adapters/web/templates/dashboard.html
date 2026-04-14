@@ -195,6 +195,12 @@
     }
     .book-meta { font-size: 0.75rem; color: var(--text-muted); }
     .book-stars { color: var(--gruvbox-yellow); }
+    .book-review {
+      font-size: 0.8rem; color: var(--text-muted);
+      font-style: italic; margin-top: 0.25rem;
+      line-height: 1.4;
+      display: block;
+    }
 
     /* --- Archive <details> --- */
     details.archive {
@@ -317,6 +323,9 @@
                 {% if book.stars %} · <span class="book-stars">{{ book.stars | stars }}</span>{% endif %}
                 {% if book.finished_at %} · {{ format_date(book.finished_at) }}{% endif %}
               </span>
+              {% if book.review %}
+              <span class="book-review">{{ book.review }}</span>
+              {% endif %}
             </div>
           </{{ tag }}>
         </li>
@@ -346,6 +355,9 @@
                   {% if book.stars %} · <span class="book-stars">{{ book.stars | stars }}</span>{% endif %}
                   {% if book.finished_at %} · {{ format_date(book.finished_at) }}{% endif %}
                 </span>
+                {% if book.review %}
+                <span class="book-review">{{ book.review }}</span>
+                {% endif %}
               </div>
             </{{ tag }}>
           </li>

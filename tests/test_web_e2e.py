@@ -87,8 +87,21 @@ def _book(rkey: str, title: str, *, percent: int | None = None, cover_cid: str |
     return {"uri": f"at://{DID}/buzz.bookhive.book/{rkey}", "cid": "cid", "value": value}
 
 
-def test_dashboard_requires_auth(client):
-    assert client.get("/").status_code == 401
+@respx.mock
+def test_dashboard_is_public(client):
+    """Web dashboard is intentionally unauthenticated — data is already public on bookhive.buzz."""
+    _mock_session(respx.mock)
+    _mock_profile(respx.mock)
+    respx.get("https://pds.example/xrpc/com.atproto.repo.listRecords").mock(
+        return_value=httpx.Response(200, json=_records([_book("rk1", "Book")])),
+    )
+    assert client.get("/").status_code == 200
+
+
+def test_webdav_on_root_still_requires_auth(client):
+    """Bypassing auth on GET / must not leak PROPFIND / etc. to the world."""
+    assert client.request("PROPFIND", "/").status_code == 401
+    assert client.request("OPTIONS", "/").status_code == 401
 
 
 @respx.mock
@@ -142,7 +155,8 @@ def test_cover_proxy_serves_known_cid(client):
         ),
     )
 
-    r = client.get("/blob/bafycover", auth=AUTH)
+    # No AUTH — cover proxy is public, same as the dashboard.
+    r = client.get("/blob/bafycover")
     assert r.status_code == 200
     assert r.content.startswith(b"\xff\xd8\xff")
     assert r.headers["content-type"] == "image/jpeg"

@@ -39,9 +39,22 @@ def create_app() -> FastAPI:
 
     app = FastAPI(lifespan=lifespan, openapi_url=None, docs_url=None, redoc_url=None)
 
+    def _public(request: Request) -> bool:
+        """Routes that bypass basic auth.
+
+        The read-only web dashboard (`GET /`) and cover proxy (`GET /blob/*`)
+        are intentionally public — the data they expose is already public on
+        bookhive.buzz. Everything else (WebDAV on any verb, including
+        PROPFIND/GET/PUT on `/` and `/Books/*`) stays gated.
+        """
+        path = request.url.path
+        if path == "/healthz":
+            return True
+        return request.method == "GET" and (path == "/" or path.startswith("/blob/"))
+
     class BasicAuthMiddleware(BaseHTTPMiddleware):
         async def dispatch(self, request: Request, call_next):
-            if request.url.path == "/healthz":
+            if _public(request):
                 return await call_next(request)
             if not auth.check(request, cfg.dav_user, cfg.dav_password):
                 return auth.challenge()
