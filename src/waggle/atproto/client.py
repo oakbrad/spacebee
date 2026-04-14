@@ -103,6 +103,23 @@ class ATProtoClient:
             did=data["did"],
         )
 
+    @staticmethod
+    def _is_expired_token(resp: httpx.Response) -> bool:
+        """True if the PDS is telling us to refresh.
+
+        atproto's convention: a fully-unauthenticated call returns 401, but a
+        call with a previously-valid token that has since expired returns 400
+        with `{"error": "ExpiredToken"}`. Both should trigger a refresh.
+        """
+        if resp.status_code == 401:
+            return True
+        if resp.status_code == 400:
+            try:
+                return resp.json().get("error") in ("ExpiredToken", "InvalidToken")
+            except ValueError:
+                return False
+        return False
+
     async def request(
         self,
         method: str,
@@ -113,7 +130,7 @@ class ATProtoClient:
         content: bytes | None = None,
         headers: dict | None = None,
     ) -> httpx.Response:
-        """XRPC call with auto-refresh on 401."""
+        """XRPC call with auto-refresh on ExpiredToken / 401."""
         sess = await self._ensure_session()
         url = f"{self.pds_url}/xrpc/{nsid}"
         hdrs = {"Authorization": f"Bearer {sess.access_jwt}"}
@@ -123,7 +140,8 @@ class ATProtoClient:
         resp = await self._http.request(
             method, url, params=params, json=json, content=content, headers=hdrs
         )
-        if resp.status_code == 401:
+        if self._is_expired_token(resp):
+            log.info("Access token expired; refreshing and retrying %s", nsid)
             async with self._lock:
                 await self._refresh_session()
             assert self._session is not None
