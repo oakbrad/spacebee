@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reading · {{ profile.handle or "waggle" }}</title>
+  <style>
+    /* Gruvbox palette, lifted from brad.quest */
+    :root {
+      --bg-main: #fbf1c7;
+      --bg-muted: #f2e5bc;
+      --bg-surface: #ebdbb2;
+      --border-main: #d5c4a1;
+      --text-main: #3c3836;
+      --text-muted: #7c6f64;
+      --link-color: #076678;
+      --accent: #b57614;
+      --gruvbox-yellow: #b57614;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-main: #282828;
+        --bg-muted: #3c3836;
+        --bg-surface: #504945;
+        --border-main: #504945;
+        --text-main: #ebdbb2;
+        --text-muted: #a89984;
+        --link-color: #83a598;
+        --accent: #fabd2f;
+        --gruvbox-yellow: #fabd2f;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      padding: 2rem 1rem 4rem;
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont,
+                   "Inter", "Segoe UI", sans-serif;
+      background: var(--bg-main);
+      color: var(--text-main);
+      line-height: 1.5;
+    }
+    .wrap { max-width: 880px; margin: 0 auto; }
+    a { color: var(--link-color); }
+    a:hover { text-decoration: underline; }
+
+    .font-serif {
+      font-family: ui-serif, "Newsreader", Georgia, "Times New Roman", serif;
+    }
+
+    /* --- Profile header --- */
+    header.profile {
+      display: flex; align-items: center; gap: 1rem;
+      padding-bottom: 1.25rem; margin-bottom: 2rem;
+      border-bottom: 1px solid var(--border-main);
+    }
+    header.profile img {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: var(--bg-muted); object-fit: cover;
+    }
+    header.profile .who { margin: 0; font-weight: 600; }
+    header.profile .meta { color: var(--text-muted); font-size: 0.85rem; margin: 0.1rem 0 0; }
+    .profile-link {
+      display: flex; align-items: center; gap: 1rem;
+      text-decoration: none; color: inherit;
+      padding: 0.25rem 0.5rem; margin: -0.25rem -0.5rem;
+      border-radius: 0.375rem;
+      transition: background-color 0.15s ease;
+    }
+    .profile-link:hover {
+      background-color: color-mix(in srgb, var(--accent) 12%, transparent);
+      text-decoration: none;
+    }
+
+    /* --- Section headings --- */
+    section { margin-bottom: 2.5rem; }
+    section > h1, section > h2, section > h3 { margin: 0 0 0.5rem; font-weight: 500; }
+    section > h1 { font-size: 2rem; font-style: italic; }
+    section > h2 { font-size: 1.5rem; }
+    section > h3 { font-size: 1.25rem; }
+    section > .subtitle {
+      color: var(--text-muted); font-size: 0.85rem; margin: 0 0 1.25rem;
+    }
+
+    /* --- Currently Reading: largest tier --- */
+    .current-books {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .current-book {
+      display: flex; flex-direction: column; align-items: center;
+      text-align: center; text-decoration: none; color: inherit;
+      padding: 0.75rem; border-radius: 0.5rem;
+      transition: background-color 0.15s ease;
+    }
+    .current-book:hover {
+      background-color: color-mix(in srgb, var(--accent) 12%, transparent);
+      text-decoration: none;
+    }
+    .current-cover, .current-cover-ph {
+      width: 160px; height: 240px;
+      border-radius: 0.375rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+      margin-bottom: 0.75rem;
+      object-fit: cover;
+      background: var(--bg-muted);
+    }
+    .current-cover-ph {
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-muted); font-size: 2rem;
+      border: 1px solid var(--border-main);
+    }
+    .current-title {
+      font-size: 1.05rem; font-weight: 600; margin: 0 0 0.15rem;
+    }
+    .current-author {
+      font-size: 0.85rem; color: var(--text-muted); margin: 0 0 0.5rem;
+    }
+    .current-progress {
+      width: 100%; font-size: 0.75rem; color: var(--text-muted);
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    progress {
+      flex: 1; height: 4px;
+      -webkit-appearance: none; appearance: none; border: 0;
+    }
+    progress::-webkit-progress-bar { background: var(--bg-muted); border-radius: 2px; }
+    progress::-webkit-progress-value { background: var(--accent); border-radius: 2px; }
+    progress::-moz-progress-bar { background: var(--accent); }
+
+    /* --- Want to Read: medium tier --- */
+    .want-books {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 0.75rem;
+    }
+    .want-book {
+      display: flex; flex-direction: column; align-items: center;
+      text-align: center; text-decoration: none; color: inherit;
+      padding: 0.5rem; border-radius: 0.375rem;
+      transition: background-color 0.15s ease;
+    }
+    .want-book:hover {
+      background-color: color-mix(in srgb, var(--accent) 12%, transparent);
+    }
+    .want-cover, .want-cover-ph {
+      width: 80px; height: 120px;
+      border-radius: 0.25rem;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+      margin-bottom: 0.5rem;
+      object-fit: cover;
+      background: var(--bg-muted);
+    }
+    .want-cover-ph {
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-muted);
+      border: 1px solid var(--border-main);
+    }
+    .want-title { font-size: 0.8rem; font-weight: 500; margin: 0; }
+    .want-author {
+      font-size: 0.7rem; color: var(--text-muted); margin: 0.1rem 0 0;
+    }
+
+    /* --- Finished list: dense rows --- */
+    .book-list {
+      list-style: none; padding: 0; margin: 0;
+      display: flex; flex-direction: column; gap: 0.25rem;
+    }
+    .book-item { border-radius: 0.375rem; transition: background-color 0.1s ease; }
+    .book-item:hover { background-color: var(--bg-muted); }
+    .book-link {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.5rem 0.75rem;
+      text-decoration: none; color: inherit;
+    }
+    .list-cover, .list-cover-ph {
+      width: 48px; height: 72px;
+      object-fit: cover;
+      border-radius: 0.25rem;
+      flex-shrink: 0;
+      background: var(--bg-muted);
+    }
+    .list-cover-ph {
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-muted); font-size: 0.9rem;
+      border: 1px solid var(--border-main);
+    }
+    .book-info { display: flex; flex-direction: column; min-width: 0; }
+    .book-title {
+      font-size: 0.875rem; font-weight: 500; color: var(--link-color);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .book-meta { font-size: 0.75rem; color: var(--text-muted); }
+    .book-stars { color: var(--gruvbox-yellow); }
+
+    /* --- Archive <details> --- */
+    details.archive {
+      margin-top: 1.5rem;
+      border-top: 1px dashed var(--border-main);
+      padding-top: 1rem;
+    }
+    details.archive > summary {
+      cursor: pointer;
+      color: var(--link-color);
+      font-size: 0.9rem;
+      list-style: none;
+    }
+    details.archive > summary::-webkit-details-marker { display: none; }
+    details.archive > summary::before {
+      content: "▸ ";
+      display: inline-block;
+      transition: transform 0.15s ease;
+    }
+    details.archive[open] > summary::before { transform: rotate(90deg); }
+    details.archive > summary:hover { text-decoration: underline; }
+    details.archive .book-list { margin-top: 0.75rem; }
+
+    .empty {
+      color: var(--text-muted); text-align: center;
+      padding: 3rem 0; font-style: italic;
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 1rem 0.75rem 3rem; }
+      section > h1 { font-size: 1.5rem; }
+      .current-cover, .current-cover-ph { width: 120px; height: 180px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    {% set profile_url = "https://bookhive.buzz/profile/" ~ profile.handle if profile.handle else None %}
+    <header class="profile">
+      {% if profile_url %}<a href="{{ profile_url }}" target="_blank" rel="noopener" class="profile-link">{% endif %}
+      <img src="{{ profile.avatar or '' }}" alt="">
+      <div>
+        <p class="who">{{ profile.displayName or profile.handle or "waggle" }}</p>
+        <p class="meta">
+          {% if profile.handle %}@{{ profile.handle }} · {% endif %}{{ book_count }} book{{ '' if book_count == 1 else 's' }} on Bookhive
+        </p>
+      </div>
+      {% if profile_url %}</a>{% endif %}
+    </header>
+
+    {% macro format_date(iso) -%}
+      {%- if iso -%}
+        {{- iso[:10] -}}
+      {%- endif -%}
+    {%- endmacro %}
+
+    {% if sections.currently_reading %}
+    <section>
+      <h1 class="font-serif">Currently Reading</h1>
+      <div class="current-books">
+        {% for book in sections.currently_reading %}
+        {% set tag = 'a' if book.bookhive_url else 'div' %}
+        <{{ tag }} class="current-book"{% if book.bookhive_url %} href="{{ book.bookhive_url }}" target="_blank" rel="noopener"{% endif %}>
+          {% if book.cover_cid %}
+          <img class="current-cover" src="/blob/{{ book.cover_cid }}" alt="" loading="lazy">
+          {% else %}
+          <div class="current-cover-ph">📖</div>
+          {% endif %}
+          <p class="current-title">{{ book.title }}</p>
+          <p class="current-author">{{ book.authors }}</p>
+          {% if book.percent is not none %}
+          <div class="current-progress">
+            <progress max="100" value="{{ book.percent }}"></progress>
+            <span>{{ book.percent }}%</span>
+          </div>
+          {% endif %}
+        </{{ tag }}>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    {% if sections.want_to_read %}
+    <section>
+      <h2 class="font-serif">Want to Read</h2>
+      <div class="want-books">
+        {% for book in sections.want_to_read %}
+        {% set tag = 'a' if book.bookhive_url else 'div' %}
+        <{{ tag }} class="want-book"{% if book.bookhive_url %} href="{{ book.bookhive_url }}" target="_blank" rel="noopener"{% endif %}>
+          {% if book.cover_cid %}
+          <img class="want-cover" src="/blob/{{ book.cover_cid }}" alt="" loading="lazy">
+          {% else %}
+          <div class="want-cover-ph">📖</div>
+          {% endif %}
+          <p class="want-title">{{ book.title }}</p>
+          <p class="want-author">{{ book.authors }}</p>
+        </{{ tag }}>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    {% if sections.finished_this_year %}
+    <section>
+      <h3 class="font-serif">Finished in {{ sections.year }}</h3>
+      <ul class="book-list">
+        {% for book in sections.finished_this_year %}
+        <li class="book-item">
+          {% set tag = 'a' if book.bookhive_url else 'div' %}
+          <{{ tag }} class="book-link"{% if book.bookhive_url %} href="{{ book.bookhive_url }}" target="_blank" rel="noopener"{% endif %}>
+            {% if book.cover_cid %}
+            <img class="list-cover" src="/blob/{{ book.cover_cid }}" alt="" loading="lazy">
+            {% else %}
+            <div class="list-cover-ph">📖</div>
+            {% endif %}
+            <div class="book-info">
+              <span class="book-title">{{ book.title }}</span>
+              <span class="book-meta">
+                {{ book.authors }}
+                {% if book.stars %} · <span class="book-stars">{{ book.stars | stars }}</span>{% endif %}
+                {% if book.finished_at %} · {{ format_date(book.finished_at) }}{% endif %}
+              </span>
+            </div>
+          </{{ tag }}>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+    {% if sections.finished_previous %}
+    <section>
+      <details class="archive">
+        <summary>{{ sections.finished_previous|length }} from previous years</summary>
+        <ul class="book-list">
+          {% for book in sections.finished_previous %}
+          <li class="book-item">
+            {% set tag = 'a' if book.bookhive_url else 'div' %}
+            <{{ tag }} class="book-link"{% if book.bookhive_url %} href="{{ book.bookhive_url }}" target="_blank" rel="noopener"{% endif %}>
+              {% if book.cover_cid %}
+              <img class="list-cover" src="/blob/{{ book.cover_cid }}" alt="" loading="lazy">
+              {% else %}
+              <div class="list-cover-ph">📖</div>
+              {% endif %}
+              <div class="book-info">
+                <span class="book-title">{{ book.title }}</span>
+                <span class="book-meta">
+                  {{ book.authors }}
+                  {% if book.stars %} · <span class="book-stars">{{ book.stars | stars }}</span>{% endif %}
+                  {% if book.finished_at %} · {{ format_date(book.finished_at) }}{% endif %}
+                </span>
+              </div>
+            </{{ tag }}>
+          </li>
+          {% endfor %}
+        </ul>
+      </details>
+    </section>
+    {% endif %}
+
+    {% if not sections.currently_reading and not sections.want_to_read
+          and not sections.finished_this_year and not sections.finished_previous %}
+    <p class="empty">No books tracked yet.</p>
+    {% endif %}
+  </div>
+</body>
+</html>

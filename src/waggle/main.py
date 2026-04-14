@@ -9,6 +9,7 @@ from fastapi import FastAPI, Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from waggle import auth, config
+from waggle.adapters.web import make_router as make_web_router
 from waggle.adapters.webdav.passthrough import Passthrough
 from waggle.adapters.webdav.router import DAVContext, make_router
 from waggle.atproto.client import ATProtoClient
@@ -52,6 +53,9 @@ def create_app() -> FastAPI:
     async def healthz() -> dict:
         return {"ok": True}
 
+    # Web dashboard is registered first so `GET /` and `/blob/{cid}` win over
+    # the WebDAV catch-all on `/{path:path}`.
+    app.include_router(make_web_router(ctx))
     app.include_router(make_router(ctx))
     return app
 

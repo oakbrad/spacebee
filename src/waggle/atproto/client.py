@@ -49,6 +49,20 @@ class ATProtoClient:
         sess = await self._ensure_session()
         return sess.did
 
+    async def get_profile(self) -> dict:
+        """Fetch the authed user's bsky profile (handle, displayName, avatar).
+
+        Hits the public bsky appview, not the user's PDS — PDSes don't serve
+        `app.bsky.*` endpoints directly. Avatar is a CDN URL safe to render.
+        """
+        did = await self.did()
+        resp = await self._http.get(
+            "https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile",
+            params={"actor": did},
+        )
+        resp.raise_for_status()
+        return resp.json()
+
     async def _ensure_session(self) -> Session:
         if self._session is not None:
             return self._session

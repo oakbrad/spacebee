@@ -281,6 +281,19 @@ async def search_catalog(client: ATProtoClient, query: str) -> dict | None:
     return books[0] if books else None
 
 
+async def fetch_blob(client: ATProtoClient, cid: str) -> httpx.Response:
+    """Fetch a blob from the authed user's repo by CID.
+
+    Used by the dashboard's cover proxy. Callers should validate the cid
+    belongs to a cover they serve before exposing this — `com.atproto.sync.getBlob`
+    will happily return any blob the repo holds.
+    """
+    did = await client.did()
+    return await client.request(
+        "GET", "com.atproto.sync.getBlob", params={"did": did, "cid": cid}
+    )
+
+
 async def upload_cover(client: ATProtoClient, cover_url: str) -> dict | None:
     """Download a cover image URL and upload as a PDS blob. Returns blob ref."""
     try:
