@@ -30,16 +30,10 @@ jobs:
 
   image:
     needs: test
-    if: github.ref == 'refs/heads/main' && vars.REGISTRY != ''
+    if: github.ref == 'refs/heads/main'
     runs-on: docker-host
     container:
       image: node:22-bookworm
-    env:
-      # Registry coordinates come from repo/org vars+secrets so this workflow
-      # is portable. Set REGISTRY + IMAGE_NAME as repo vars; REGISTRY_USER +
-      # REGISTRY_TOKEN as secrets. The job is skipped if REGISTRY is unset.
-      REGISTRY: ${{ vars.REGISTRY }}
-      IMAGE_NAME: ${{ vars.IMAGE_NAME }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -47,14 +41,22 @@ jobs:
       - name: Install Docker CLI
         run: apt-get update && apt-get install -y --no-install-recommends docker.io
 
+      - name: Derive registry coordinates
+        # Registry = the forge hosting this workflow. Image = this repo's
+        # path. No repo vars needed — forks "just work" as long as the
+        # REGISTRY_USER / REGISTRY_TOKEN secrets are set.
+        run: |
+          REGISTRY="${GITHUB_SERVER_URL#http*://}"
+          IMAGE=$(echo "$REGISTRY/$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')
+          echo "REGISTRY=$REGISTRY" >> "$GITHUB_ENV"
+          echo "IMAGE=$IMAGE"       >> "$GITHUB_ENV"
+
       - name: Login to container registry
         run: |
           echo "${{ secrets.REGISTRY_TOKEN }}" | docker login "$REGISTRY" -u "${{ secrets.REGISTRY_USER }}" --password-stdin
 
       - name: Build and push
         run: |
-          docker build \
-            -t "$REGISTRY/$IMAGE_NAME:latest" \
-            -t "$REGISTRY/$IMAGE_NAME:${{ github.sha }}" .
-          docker push "$REGISTRY/$IMAGE_NAME:latest"
-          docker push "$REGISTRY/$IMAGE_NAME:${{ github.sha }}"
+          docker build -t "$IMAGE:latest" -t "$IMAGE:${{ github.sha }}" .
+          docker push "$IMAGE:latest"
+          docker push "$IMAGE:${{ github.sha }}"
