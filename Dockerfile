@@ -8,6 +8,13 @@ RUN uv sync --frozen --no-install-project --no-dev 2>/dev/null || uv sync --no-i
 COPY src ./src
 RUN uv sync --no-dev
 
+# Run as a fixed non-root UID. If the host's ./data volume is owned by a
+# different UID, override at runtime with `user: "<uid>:<gid>"` in compose.
+RUN groupadd --gid 10001 spacebee \
+ && useradd --uid 10001 --gid 10001 --no-create-home spacebee \
+ && chown -R spacebee:spacebee /app
+USER spacebee
+
 ENV PATH="/app/.venv/bin:$PATH" \
     PASSTHROUGH_ROOT=/data/passthrough \
     LOG_LEVEL=INFO

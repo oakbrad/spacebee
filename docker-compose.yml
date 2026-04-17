@@ -6,7 +6,11 @@ services:
     container_name: spacebee
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      # Bind to loopback only — spacebee speaks plaintext Basic auth over
+      # WebDAV; put an HTTPS reverse proxy in front. If you're running the
+      # proxy on another host, change this to "8080:8080" and make sure
+      # the proxy is the only thing reachable from outside.
+      - "127.0.0.1:8080:8080"
     volumes:
       - ./data:/data
     environment:

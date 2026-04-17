@@ -12,11 +12,13 @@ file's import mtime, not a real timestamp.
 
 from __future__ import annotations
 
+import ipaddress
 import logging
 import re
 import time
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from urllib.parse import urlparse
 
 import httpx
 
@@ -289,8 +291,35 @@ async def fetch_blob(client: ATProtoClient, cid: str) -> httpx.Response:
     )
 
 
+def _is_safe_cover_url(url: str) -> bool:
+    """Reject cover URLs that could be used for SSRF.
+
+    The URL is supplied by bookhive.buzz's catalog search, which is trusted
+    but not under our control. Limit blast radius by requiring https + a
+    public-looking host. Doesn't guard against DNS-rebinding, but blocks
+    the obvious `http://169.254.169.254/...` / `http://localhost/...` cases.
+    """
+    try:
+        parsed = urlparse(url)
+    except ValueError:
+        return False
+    if parsed.scheme != "https" or not parsed.hostname:
+        return False
+    host = parsed.hostname.lower()
+    if host in ("localhost", "localhost.localdomain") or host.endswith(".localhost"):
+        return False
+    try:
+        ip = ipaddress.ip_address(host)
+    except ValueError:
+        return True  # hostname, not a bare IP — accept
+    return ip.is_global
+
+
 async def upload_cover(client: ATProtoClient, cover_url: str) -> dict | None:
     """Download a cover image URL and upload as a PDS blob. Returns blob ref."""
+    if not _is_safe_cover_url(cover_url):
+        log.warning("Refusing to fetch cover from unsafe URL: %s", cover_url)
+        return None
     try:
         img = await client.http.get(cover_url)
         img.raise_for_status()

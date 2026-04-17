@@ -13,6 +13,7 @@ from datetime import UTC, datetime
 from email.utils import format_datetime
 from pathlib import Path
 from urllib.parse import quote
+from xml.sax.saxutils import escape as xml_escape
 
 log = logging.getLogger(__name__)
 
@@ -32,8 +33,9 @@ class Passthrough:
         """Resolve a WebDAV path to a local Path, refusing escapes."""
         rel = path.lstrip("/")
         candidate = (self._root / rel).resolve()
-        # Directory traversal guard
-        if not str(candidate).startswith(str(self._root)):
+        # Use is_relative_to (not str.startswith) so sibling paths that share
+        # a prefix with _root can't sneak through: /data/pass vs /data/password.
+        if candidate != self._root and not candidate.is_relative_to(self._root):
             raise PermissionError(f"path escapes passthrough root: {path!r}")
         return candidate
 
@@ -120,7 +122,7 @@ def _entry_xml(local: Path, href: str, root: Path) -> str:
         "<D:propstat>"
         "<D:prop>"
         f"<D:resourcetype>{resourcetype}</D:resourcetype>"
-        f"<D:displayname>{local.name or 'root'}</D:displayname>"
+        f"<D:displayname>{xml_escape(local.name or 'root')}</D:displayname>"
         f"<D:getlastmodified>{lastmod}</D:getlastmodified>"
         f"{size_xml}{ct_xml}"
         "</D:prop>"

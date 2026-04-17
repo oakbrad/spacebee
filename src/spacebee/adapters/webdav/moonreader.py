@@ -12,6 +12,7 @@ import logging
 from datetime import UTC, datetime
 from email.utils import format_datetime
 from urllib.parse import quote
+from xml.sax.saxutils import escape as xml_escape
 
 from spacebee.atproto import bookhive
 from spacebee.atproto.client import ATProtoClient
@@ -68,7 +69,9 @@ def _response_xml(
     resourcetype = "<D:collection/>" if is_collection else ""
     content_type = "" if is_collection else "<D:getcontenttype>text/plain</D:getcontenttype>"
     length = "" if is_collection else f"<D:getcontentlength>{content_length}</D:getcontentlength>"
-    etag_xml = f"<D:getetag>{etag}</D:getetag>" if etag else ""
+    # etag is our own sha1 hex output (always safe), but defensively escape
+    # in case the helper contract changes.
+    etag_xml = f"<D:getetag>{xml_escape(etag)}</D:getetag>" if etag else ""
     dn = display_name or href.rsplit("/", 1)[-1] or href
     return (
         "<D:response>"
@@ -76,7 +79,7 @@ def _response_xml(
         "<D:propstat>"
         "<D:prop>"
         f"<D:resourcetype>{resourcetype}</D:resourcetype>"
-        f"<D:displayname>{dn}</D:displayname>"
+        f"<D:displayname>{xml_escape(dn)}</D:displayname>"
         f"<D:getlastmodified>{last_modified_http}</D:getlastmodified>"
         f"{length}"
         f"{content_type}"
