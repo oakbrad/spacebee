@@ -12,7 +12,8 @@ RUN uv sync --no-dev
 # different UID, override at runtime with `user: "<uid>:<gid>"` in compose.
 RUN groupadd --gid 10001 spacebee \
  && useradd --uid 10001 --gid 10001 --no-create-home spacebee \
- && chown -R spacebee:spacebee /app
+ && mkdir -p /data/passthrough \
+ && chown -R spacebee:spacebee /app /data
 USER spacebee
 
 ENV PATH="/app/.venv/bin:$PATH" \
