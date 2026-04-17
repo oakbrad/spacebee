@@ -12,6 +12,8 @@ from dataclasses import dataclass
 
 import httpx
 
+from . import identity
+
 log = logging.getLogger(__name__)
 
 TIMEOUT = 15.0
@@ -25,8 +27,11 @@ class Session:
 
 
 class ATProtoClient:
-    def __init__(self, pds: str, handle: str, app_password: str) -> None:
-        self._pds = pds.rstrip("/")
+    def __init__(self, pds: str | None, handle: str, app_password: str) -> None:
+        # `pds` may be None — in that case it's resolved from the handle the
+        # first time we authenticate. Lazy so config loading stays synchronous
+        # and offline-friendly.
+        self._pds: str | None = pds.rstrip("/") if pds else None
         self._handle = handle
         self._app_password = app_password
         self._session: Session | None = None
@@ -35,6 +40,8 @@ class ATProtoClient:
 
     @property
     def pds_url(self) -> str:
+        if self._pds is None:
+            raise RuntimeError("PDS not resolved yet — call an authenticated method first")
         return f"https://{self._pds}"
 
     @property
@@ -67,6 +74,8 @@ class ATProtoClient:
         if self._session is not None:
             return self._session
         async with self._lock:
+            if self._pds is None:
+                self._pds = await identity.resolve_pds(self._http, self._handle)
             if self._session is None:
                 self._session = await self._create_session()
         return self._session

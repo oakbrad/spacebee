@@ -10,8 +10,10 @@ from dotenv import load_dotenv
 
 @dataclass(frozen=True)
 class Config:
-    # ATProto identity spacebee writes to
-    pds: str
+    # ATProto identity spacebee writes to.
+    # `pds` is optional — when unset (or empty), ATProtoClient resolves it
+    # from `bsky_handle` at first use via the public bsky appview + PLC.
+    pds: str | None
     bsky_handle: str
     bsky_app_password: str
 
@@ -28,7 +30,6 @@ class Config:
 def load() -> Config:
     load_dotenv()
     required = [
-        "PDS",
         "BSKY_HANDLE",
         "BSKY_APP_PASSWORD",
         "DAV_USER",
@@ -39,7 +40,7 @@ def load() -> Config:
         raise RuntimeError(f"Missing required env vars: {', '.join(missing)}")
 
     return Config(
-        pds=os.environ["PDS"],
+        pds=os.environ.get("PDS") or None,
         bsky_handle=os.environ["BSKY_HANDLE"],
         bsky_app_password=os.environ["BSKY_APP_PASSWORD"],
         dav_user=os.environ["DAV_USER"],

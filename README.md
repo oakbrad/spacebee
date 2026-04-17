@@ -40,9 +40,9 @@ Copy `.env.example` to `.env` and fill in:
 
 | Var | Purpose |
 | --- | --- |
-| `PDS` | Your atproto PDS host (e.g. `bsky.social`) |
 | `BSKY_HANDLE` | The handle spacebee writes records as |
 | `BSKY_APP_PASSWORD` | An [app password] for that handle |
+| `PDS` | *Optional.* PDS host (e.g. `bsky.social`). If unset, resolved from the handle at first use via the public bsky appview + PLC directory. |
 | `DAV_USER` / `DAV_PASSWORD` | Basic-auth credentials Moon+ Reader will send |
 | `PASSTHROUGH_ROOT` | Local-disk scratch dir for non-`.po` paths |
 
