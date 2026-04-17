@@ -1,6 +1,6 @@
 """Pure-function tests for `.po` parsing and filename heuristics."""
 
-from waggle.atproto import bookhive
+from spacebee.atproto import bookhive
 
 
 class TestParsePo:

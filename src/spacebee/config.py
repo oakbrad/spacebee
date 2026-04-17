@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 @dataclass(frozen=True)
 class Config:
-    # ATProto identity waggle writes to
+    # ATProto identity spacebee writes to
     pds: str
     bsky_handle: str
     bsky_app_password: str

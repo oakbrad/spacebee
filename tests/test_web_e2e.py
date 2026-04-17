@@ -9,20 +9,20 @@ import pytest
 import respx
 from fastapi.testclient import TestClient
 
-from waggle.atproto import bookhive
+from spacebee.atproto import bookhive
 
 
 @pytest.fixture
 def app(monkeypatch):
     bookhive.invalidate_cache()
-    tmp = tempfile.mkdtemp(prefix="waggle-web-test-")
+    tmp = tempfile.mkdtemp(prefix="spacebee-web-test-")
     monkeypatch.setenv("PDS", "pds.example")
     monkeypatch.setenv("BSKY_HANDLE", "tester.example")
     monkeypatch.setenv("BSKY_APP_PASSWORD", "app-pw")
     monkeypatch.setenv("DAV_USER", "u")
     monkeypatch.setenv("DAV_PASSWORD", "p")
     monkeypatch.setenv("PASSTHROUGH_ROOT", tmp)
-    from waggle import main as main_mod
+    from spacebee import main as main_mod
     return main_mod.create_app()
 
 

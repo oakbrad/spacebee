@@ -9,7 +9,7 @@ import pytest
 import respx
 from fastapi.testclient import TestClient
 
-from waggle.atproto import bookhive
+from spacebee.atproto import bookhive
 
 
 @pytest.fixture
@@ -17,7 +17,7 @@ def app(monkeypatch):
     # Clear module-level record cache between tests.
     bookhive.invalidate_cache()
 
-    tmp = tempfile.mkdtemp(prefix="waggle-test-")
+    tmp = tempfile.mkdtemp(prefix="spacebee-test-")
     monkeypatch.setenv("PDS", "pds.example")
     monkeypatch.setenv("BSKY_HANDLE", "tester.example")
     monkeypatch.setenv("BSKY_APP_PASSWORD", "app-pw")
@@ -26,7 +26,7 @@ def app(monkeypatch):
     monkeypatch.setenv("PASSTHROUGH_ROOT", tmp)
 
     # Reload the app factory to pick up env.
-    from waggle import main as main_mod
+    from spacebee import main as main_mod
 
     return main_mod.create_app()
 

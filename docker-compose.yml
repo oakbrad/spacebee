@@ -1,7 +1,9 @@
 services:
-  waggle:
-    image: git.brads.house/brad/waggle:latest
-    container_name: waggle
+  spacebee:
+    # Override with your own built image or pulled tag.
+    # Example: `IMAGE=ghcr.io/you/spacebee:latest docker compose up -d`
+    image: ${IMAGE:-spacebee:latest}
+    container_name: spacebee
     restart: unless-stopped
     ports:
       - "8080:8080"

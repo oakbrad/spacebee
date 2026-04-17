@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Reading · {{ profile.handle or "waggle" }}</title>
+  <title>Reading · {{ profile.handle or "spacebee" }}</title>
   <style>
-    /* Gruvbox palette, lifted from brad.quest */
+    /* Gruvbox palette */
     :root {
       --bg-main: #fbf1c7;
       --bg-muted: #f2e5bc;
@@ -243,7 +243,7 @@
       {% if profile_url %}<a href="{{ profile_url }}" target="_blank" rel="noopener" class="profile-link">{% endif %}
       <img src="{{ profile.avatar or '' }}" alt="">
       <div>
-        <p class="who">{{ profile.displayName or profile.handle or "waggle" }}</p>
+        <p class="who">{{ profile.displayName or profile.handle or "spacebee" }}</p>
         <p class="meta">
           {% if profile.handle %}@{{ profile.handle }} · {% endif %}{{ book_count }} book{{ '' if book_count == 1 else 's' }} on Bookhive
         </p>

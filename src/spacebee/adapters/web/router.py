@@ -9,15 +9,15 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import HTMLResponse, Response
 from jinja2 import Environment, PackageLoader, select_autoescape
 
-from waggle.adapters.webdav.router import DAVContext
-from waggle.atproto import bookhive
+from spacebee.adapters.webdav.router import DAVContext
+from spacebee.atproto import bookhive
 
 from . import view
 
 log = logging.getLogger(__name__)
 
 _env = Environment(
-    loader=PackageLoader("waggle.adapters.web", "templates"),
+    loader=PackageLoader("spacebee.adapters.web", "templates"),
     autoescape=select_autoescape(["html"]),
     trim_blocks=True,
     lstrip_blocks=True,

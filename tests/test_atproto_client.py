@@ -6,7 +6,7 @@ import httpx
 import pytest
 import respx
 
-from waggle.atproto.client import ATProtoClient
+from spacebee.atproto.client import ATProtoClient
 
 
 @pytest.fixture

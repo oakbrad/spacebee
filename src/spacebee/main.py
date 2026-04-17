@@ -8,11 +8,11 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from waggle import auth, config
-from waggle.adapters.web import make_router as make_web_router
-from waggle.adapters.webdav.passthrough import Passthrough
-from waggle.adapters.webdav.router import DAVContext, make_router
-from waggle.atproto.client import ATProtoClient
+from spacebee import auth, config
+from spacebee.adapters.web import make_router as make_web_router
+from spacebee.adapters.webdav.passthrough import Passthrough
+from spacebee.adapters.webdav.router import DAVContext, make_router
+from spacebee.atproto.client import ATProtoClient
 
 
 def create_app() -> FastAPI:
@@ -22,7 +22,7 @@ def create_app() -> FastAPI:
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
         datefmt="%H:%M:%S",
     )
-    log = logging.getLogger("waggle")
+    log = logging.getLogger("spacebee")
 
     client = ATProtoClient(cfg.pds, cfg.bsky_handle, cfg.bsky_app_password)
     passthrough = Passthrough(cfg.passthrough_root)
@@ -30,12 +30,12 @@ def create_app() -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(_: FastAPI):
-        log.info("waggle starting (pds=%s handle=%s)", cfg.pds, cfg.bsky_handle)
+        log.info("spacebee starting (pds=%s handle=%s)", cfg.pds, cfg.bsky_handle)
         try:
             yield
         finally:
             await client.close()
-            log.info("waggle stopped")
+            log.info("spacebee stopped")
 
     app = FastAPI(lifespan=lifespan, openapi_url=None, docs_url=None, redoc_url=None)
 

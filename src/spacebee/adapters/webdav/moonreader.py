@@ -13,8 +13,8 @@ from datetime import UTC, datetime
 from email.utils import format_datetime
 from urllib.parse import quote
 
-from waggle.atproto import bookhive
-from waggle.atproto.client import ATProtoClient
+from spacebee.atproto import bookhive
+from spacebee.atproto.client import ATProtoClient
 
 log = logging.getLogger(__name__)
 

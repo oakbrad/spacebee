@@ -1,7 +1,7 @@
 """Local-disk WebDAV fallback for paths outside the Moon+ cache virtual tree.
 
 Moon+ Reader syncs non-position files (settings, bookmark lists, theme data)
-alongside `.po` files. waggle stores those on disk under `PASSTHROUGH_ROOT` and
+alongside `.po` files. spacebee stores those on disk under `PASSTHROUGH_ROOT` and
 serves them back over DAV. Eventually, annotation-bearing files here may be
 routed to `margin.at` records — out of scope for v1.
 """

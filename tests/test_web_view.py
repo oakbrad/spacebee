@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from waggle.adapters.web.view import build_books_view, cover_cids, partition
+from spacebee.adapters.web.view import build_books_view, cover_cids, partition
 
 
 def _rec(title: str, **overrides) -> dict:

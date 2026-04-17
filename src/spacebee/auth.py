@@ -1,6 +1,6 @@
 """HTTP Basic gate on all DAV requests.
 
-Single shared credential — waggle only serves one ATProto identity, so the
+Single shared credential — spacebee only serves one ATProto identity, so the
 Basic auth here just lets Moon+ Reader say "I'm allowed to talk to this box."
 It does not map to different atproto accounts.
 """
@@ -27,4 +27,4 @@ def check(request: Request, dav_user: str, dav_password: str) -> bool:
 
 
 def challenge() -> Response:
-    return Response(status_code=401, headers={"WWW-Authenticate": 'Basic realm="waggle"'})
+    return Response(status_code=401, headers={"WWW-Authenticate": 'Basic realm="spacebee"'})

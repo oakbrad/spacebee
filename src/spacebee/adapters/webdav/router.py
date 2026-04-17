@@ -14,7 +14,7 @@ from dataclasses import dataclass
 
 from fastapi import APIRouter, Request, Response
 
-from waggle.atproto.client import ATProtoClient
+from spacebee.atproto.client import ATProtoClient
 
 from . import moonreader
 from .passthrough import Passthrough

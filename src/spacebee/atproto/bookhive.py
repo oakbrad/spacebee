@@ -1,9 +1,5 @@
 """Translation layer between Moon+ Reader `.po` files and buzz.bookhive.book records.
 
-The parsing / matching helpers are lifted (with light edits) from
-`../moon2hive/moon2hive.py`. The ATProto calls are rewritten to go through
-`ATProtoClient` instead of the old sync `requests` path.
-
 Namespace contract:
 
     bookProgress.moonReader.{position, file, syncedAt}
@@ -11,8 +7,7 @@ Namespace contract:
 `moonReader.position` is the raw `.po` content byte-for-byte. We preserve it on
 write so GETs (which return this verbatim) continue to produce a file Moon+
 Reader recognizes — including its internal `timestamp_ms` which is the ebook
-file's import mtime, not a real timestamp. See the moon2hive CLAUDE.md for the
-full story.
+file's import mtime, not a real timestamp.
 """
 
 from __future__ import annotations
@@ -32,7 +27,7 @@ log = logging.getLogger(__name__)
 BOOKHIVE_COLLECTION = "buzz.bookhive.book"
 BOOKHIVE_CATALOG_URL = "https://bookhive.buzz/xrpc/buzz.bookhive.searchBooks"
 
-# Records cache: single-user waggle, so a module-level dict suffices.
+# Records cache: single-user spacebee, so a module-level dict suffices.
 _RECORDS_CACHE: dict[str, tuple[float, list[dict]]] = {}
 RECORDS_TTL = 30.0
 
