@@ -1,3 +1,5 @@
+<img src="icon.png" alt="spacebee" width="160" align="right">
+
 # spacebee
 
 A WebDAV shim for syncing [Moon+ Reader](https://www.moondownload.com) reading position. Translates
