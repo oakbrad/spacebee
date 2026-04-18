@@ -2,6 +2,8 @@
 name = "spacebee"
 version = "0.1.0"
 description = "WebDAV shim that translates Moon+ Reader sync requests into ATProto bookhive records"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115",
