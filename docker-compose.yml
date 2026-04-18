@@ -1,8 +1,9 @@
 services:
   spacebee:
-    # Override with your own built image or pulled tag.
-    # Example: `IMAGE=ghcr.io/you/spacebee:latest docker compose up -d`
-    image: ${IMAGE:-spacebee:latest}
+    # Defaults to the public GHCR image. Override with `IMAGE=...` if you
+    # forked and pushed to your own registry, or want to pin to a commit
+    # sha tag: `IMAGE=ghcr.io/oakbrad/spacebee:<sha> docker compose up -d`.
+    image: ${IMAGE:-ghcr.io/oakbrad/spacebee:latest}
     container_name: spacebee
     restart: unless-stopped
     ports:
